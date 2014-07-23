@@ -86,6 +86,7 @@ public class Transformer
         }
         List<TaggedWord> taggedSentence = tagger.tagSentence(sentence);
         StringBuilder sb = new StringBuilder();
+        sb.append('(');
         for(TaggedWord taggedWord : taggedSentence){
             String s = MessageFormat.format("({0} ({1}))", taggedWord.word(), taggedWord.tag());
             sb.append(s);
