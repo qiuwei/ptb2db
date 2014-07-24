@@ -24,7 +24,7 @@ import java.util.List;
 public class Transformer
 {
     private static final String MODEL_PATH = "models/english-left3words-distsim.tagger";
-    private static final MaxentTagger tagger = new MaxentTagger(MODEL_PATH);
+    private MaxentTagger tagger;
 
     private static PennTreeReader loadPTBCorpus(String fileName){
         PennTreeReader ptReader = null;
@@ -36,7 +36,12 @@ public class Transformer
         return ptReader;
     }
 
-    public static void transform(String fileName, Option option) throws IOException{
+    public Transformer(String modelPath){
+        tagger = new MaxentTagger(modelPath);
+    }
+
+
+    public void transform(String fileName, Option option) throws IOException{
         PennTreeReader ptReader = loadPTBCorpus(fileName);
         Tree currentTree = ptReader.readTree();
         while (currentTree != null) {
@@ -49,7 +54,7 @@ public class Transformer
         }
     }
 
-    private static String transformGold(Tree tree) {
+    private String transformGold(Tree tree) {
         StringBuilder sb = new StringBuilder();
         sb.append('(');
         List<Tree> nodes = tree.getLeaves();
@@ -66,7 +71,7 @@ public class Transformer
         return sb.toString();
     }
 
-    private static String transformEmpty(Tree tree){
+    private String transformEmpty(Tree tree){
         StringBuilder sb = new StringBuilder();
         sb.append('(');
         List<Tree> nodes = tree.getLeaves();
@@ -79,7 +84,7 @@ public class Transformer
         return sb.toString();
     }
 
-    private static String transformStanford(Tree tree){
+    private String transformStanford(Tree tree){
         List<Word> sentence = new ArrayList<Word>();
         for (Tree node : tree.getLeaves()) {
             sentence.add(new Word(node.label()));
@@ -103,9 +108,11 @@ public class Transformer
         ArgumentParser parser = ArgumentParsers.newArgumentParser("ptb2db").description("Transform Penn Treebank into Dan Bikel's Parser Format");
         parser.addArgument("file").metavar("F").help("Name of the file which contains Penn Treebank style data");
         parser.addArgument("tag").metavar("T").choices("empty", "gold", "stanford").help("Type of tags used");
+        parser.addArgument("--model").setDefault(MODEL_PATH).metavar("M").help("Path to the POS tagger model");
         try {
             Namespace res = parser.parseArgs(args);
-            transform((String)res.get("file"), Option.valueOf((String)res.get("tag")));
+            Transformer transformer = new Transformer((String)res.get("model"));
+            transformer.transform((String)res.get("file"), Option.valueOf((String)res.get("tag")));
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ArgumentParserException e) {
